@@ -1,0 +1,16 @@
+{
+  "name": "teamelogisolgrievanceapi",
+  "version": "1.0.0",
+  "description": "Node.js API project for TeamElogisolGrievanceAPI",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "mssql": "^11.0.1"
+  }
+}
