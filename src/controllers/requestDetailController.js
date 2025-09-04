@@ -10,12 +10,14 @@ async function getRequestDetail(req, res) {
     const result = await sql.query`
       SELECT RM.RequestId, RM.Subject, RM.Message, RM.Remark, RM.PriorityId, PM.PriorityName,
              RM.StatusId, SM.StatusName, RM.IsActive, RM.DelMark, RM.CreatedBy, UM.UserName AS CreatedByUserName, RM.CreatedOn, RM.UpdatedBy, RM.UpdatedOn,
-             RM.RequestTypeId, RTM.RequestType
+             RM.RequestTypeId, RTM.RequestType,
+             UM.CompanyId, CM.CompanyName
       FROM REQUEST_MASTER RM
       LEFT JOIN PRIORITY_MASTER PM ON RM.PriorityId = PM.PriorityId
       LEFT JOIN STATUS_MASTER SM ON RM.StatusId = SM.StatusId
       LEFT JOIN REQUEST_TYPE_MASTER RTM ON RM.RequestTypeId = RTM.RequestTypeId
       LEFT JOIN USER_MASTER UM ON RM.CreatedBy = UM.UserId
+      LEFT JOIN COMPANY_MASTER CM ON UM.CompanyId = CM.CompanyId
       WHERE RM.RequestId = ${requestId}
     `;
     if (result.recordset.length === 0) {

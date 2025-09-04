@@ -8,33 +8,55 @@ async function fetchUserRequests(req, res) {
   }
   const offset = (page - 1) * pageSize;
   try {
-    // Get total count
-    const countResult = await sql.query`SELECT COUNT(*) AS total FROM UserRequest WHERE UserId = ${userId} AND DelMark = 0`;
+    // Get user's role
+    const userResult = await sql.query`SELECT RoleId FROM USER_MASTER WHERE UserId = ${userId}`;
+    const userRoleId = userResult.recordset[0]?.RoleId;
+
+    let countResult, result;
+    if (userRoleId === 1) {
+      // Admin: fetch all requests
+      countResult = await sql.query`SELECT COUNT(*) AS total FROM REQUEST_MASTER WHERE DelMark = 0`;
+      result = await sql.query`
+        SELECT RM.RequestId, RM.Subject, RM.Message, RM.Remark, RM.PriorityId, PM.PriorityName,
+               RM.StatusId, SM.StatusName, RM.IsActive, RM.DelMark, RM.CreatedBy, UM.UserName AS CreatedByUserName, RM.CreatedOn, RM.UpdatedBy, RM.UpdatedOn,
+               RM.RequestTypeId, RTM.RequestType
+        FROM REQUEST_MASTER RM
+        LEFT JOIN PRIORITY_MASTER PM ON RM.PriorityId = PM.PriorityId
+        LEFT JOIN STATUS_MASTER SM ON RM.StatusId = SM.StatusId
+        LEFT JOIN REQUEST_TYPE_MASTER RTM ON RM.RequestTypeId = RTM.RequestTypeId
+        LEFT JOIN USER_MASTER UM ON RM.CreatedBy = UM.UserId
+        WHERE RM.DelMark = 0
+        ORDER BY RM.CreatedOn DESC
+        OFFSET ${offset} ROWS FETCH NEXT ${pageSize} ROWS ONLY
+      `;
+    } else {
+      // Non-admin: fetch only user's requests
+      countResult = await sql.query`SELECT COUNT(*) AS total FROM UserRequest WHERE UserId = ${userId} AND DelMark = 0`;
+      result = await sql.query`
+        SELECT RM.RequestId, RM.Subject, RM.Message, RM.Remark, RM.PriorityId, PM.PriorityName,
+               RM.StatusId, SM.StatusName, RM.IsActive, RM.DelMark, RM.CreatedBy, UM.UserName AS CreatedByUserName, RM.CreatedOn, RM.UpdatedBy, RM.UpdatedOn,
+               RM.RequestTypeId, RTM.RequestType
+        FROM UserRequest UR
+        INNER JOIN REQUEST_MASTER RM ON UR.RequestId = RM.RequestId
+        LEFT JOIN PRIORITY_MASTER PM ON RM.PriorityId = PM.PriorityId
+        LEFT JOIN STATUS_MASTER SM ON RM.StatusId = SM.StatusId
+        LEFT JOIN REQUEST_TYPE_MASTER RTM ON RM.RequestTypeId = RTM.RequestTypeId
+        LEFT JOIN USER_MASTER UM ON RM.CreatedBy = UM.UserId
+        WHERE UR.UserId = ${userId} AND UR.DelMark = 0
+        ORDER BY RM.CreatedOn DESC
+        OFFSET ${offset} ROWS FETCH NEXT ${pageSize} ROWS ONLY
+      `;
+    }
     const total = countResult.recordset[0].total;
-    // Fetch paginated requests
-    const result = await sql.query`
-      SELECT RM.RequestId, RM.Subject, RM.Message, RM.Remark, RM.PriorityId, PM.PriorityName,
-             RM.StatusId, SM.StatusName, RM.IsActive, RM.DelMark, RM.CreatedBy, UM.UserName AS CreatedByUserName, RM.CreatedOn, RM.UpdatedBy, RM.UpdatedOn,
-             RM.RequestTypeId, RTM.RequestType
-      FROM UserRequest UR
-      INNER JOIN REQUEST_MASTER RM ON UR.RequestId = RM.RequestId
-      LEFT JOIN PRIORITY_MASTER PM ON RM.PriorityId = PM.PriorityId
-      LEFT JOIN STATUS_MASTER SM ON RM.StatusId = SM.StatusId
-      LEFT JOIN REQUEST_TYPE_MASTER RTM ON RM.RequestTypeId = RTM.RequestTypeId
-      LEFT JOIN USER_MASTER UM ON RM.CreatedBy = UM.UserId
-      WHERE UR.UserId = ${userId} AND UR.DelMark = 0
-      ORDER BY RM.CreatedOn DESC
-      OFFSET ${offset} ROWS FETCH NEXT ${pageSize} ROWS ONLY
-    `;
     const requests = result.recordset.map(r => ({
       RequestId: r.RequestId,
       Subject: r.Subject,
       Message: r.Message,
       Remark: r.Remark,
       PriorityId: r.PriorityId,
-      Priority: r.PriorityName,
+      PriorityName: r.PriorityName,
       StatusId: r.StatusId,
-      Status: r.StatusName,
+      StatusName: r.StatusName,
       IsActive: r.IsActive,
       DelMark: r.DelMark,
       CreatedBy: r.CreatedByUserName || r.CreatedBy,
