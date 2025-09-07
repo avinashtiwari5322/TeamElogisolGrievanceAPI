@@ -15,34 +15,34 @@ async function fetchUserRequests(req, res) {
     let countResult, result;
     if (userRoleId === 1) {
       // Admin: fetch all requests
-      countResult = await sql.query`SELECT COUNT(*) AS total FROM REQUEST_MASTER WHERE DelMark = 0`;
+      countResult = await sql.query`SELECT COUNT(*) AS total FROM REQUEST_MASTER WHERE IsActive = 1 AND DelMark = 0`;
       result = await sql.query`
         SELECT RM.RequestId, RM.Subject, RM.Message, RM.Remark, RM.PriorityId, PM.PriorityName,
                RM.StatusId, SM.StatusName, RM.IsActive, RM.DelMark, RM.CreatedBy, UM.UserName AS CreatedByUserName, RM.CreatedOn, RM.UpdatedBy, RM.UpdatedOn,
                RM.RequestTypeId, RTM.RequestType
         FROM REQUEST_MASTER RM
-        LEFT JOIN PRIORITY_MASTER PM ON RM.PriorityId = PM.PriorityId
-        LEFT JOIN STATUS_MASTER SM ON RM.StatusId = SM.StatusId
-        LEFT JOIN REQUEST_TYPE_MASTER RTM ON RM.RequestTypeId = RTM.RequestTypeId
-        LEFT JOIN USER_MASTER UM ON RM.CreatedBy = UM.UserId
-        WHERE RM.DelMark = 0
+        LEFT JOIN PRIORITY_MASTER PM ON RM.PriorityId = PM.PriorityId AND PM.IsActive = 1 AND PM.DelMark = 0
+        LEFT JOIN STATUS_MASTER SM ON RM.StatusId = SM.StatusId AND SM.IsActive = 1 AND SM.DelMark = 0
+        LEFT JOIN REQUEST_TYPE_MASTER RTM ON RM.RequestTypeId = RTM.RequestTypeId AND RTM.IsActive = 1 AND RTM.DelMark = 0
+        LEFT JOIN USER_MASTER UM ON RM.CreatedBy = UM.UserId AND UM.IsActive = 1 AND UM.DelMark = 0
+        WHERE RM.IsActive = 1 AND RM.DelMark = 0
         ORDER BY RM.CreatedOn DESC
         OFFSET ${offset} ROWS FETCH NEXT ${pageSize} ROWS ONLY
       `;
     } else {
       // Non-admin: fetch only user's requests
-      countResult = await sql.query`SELECT COUNT(*) AS total FROM UserRequest WHERE UserId = ${userId} AND DelMark = 0`;
+      countResult = await sql.query`SELECT COUNT(*) AS total FROM UserRequest WHERE UserId = ${userId} AND IsActive = 1 AND DelMark = 0`;
       result = await sql.query`
         SELECT RM.RequestId, RM.Subject, RM.Message, RM.Remark, RM.PriorityId, PM.PriorityName,
                RM.StatusId, SM.StatusName, RM.IsActive, RM.DelMark, RM.CreatedBy, UM.UserName AS CreatedByUserName, RM.CreatedOn, RM.UpdatedBy, RM.UpdatedOn,
                RM.RequestTypeId, RTM.RequestType
         FROM UserRequest UR
-        INNER JOIN REQUEST_MASTER RM ON UR.RequestId = RM.RequestId
-        LEFT JOIN PRIORITY_MASTER PM ON RM.PriorityId = PM.PriorityId
-        LEFT JOIN STATUS_MASTER SM ON RM.StatusId = SM.StatusId
-        LEFT JOIN REQUEST_TYPE_MASTER RTM ON RM.RequestTypeId = RTM.RequestTypeId
-        LEFT JOIN USER_MASTER UM ON RM.CreatedBy = UM.UserId
-        WHERE UR.UserId = ${userId} AND UR.DelMark = 0
+        INNER JOIN REQUEST_MASTER RM ON UR.RequestId = RM.RequestId AND RM.IsActive = 1 AND RM.DelMark = 0
+        LEFT JOIN PRIORITY_MASTER PM ON RM.PriorityId = PM.PriorityId AND PM.IsActive = 1 AND PM.DelMark = 0
+        LEFT JOIN STATUS_MASTER SM ON RM.StatusId = SM.StatusId AND SM.IsActive = 1 AND SM.DelMark = 0
+        LEFT JOIN REQUEST_TYPE_MASTER RTM ON RM.RequestTypeId = RTM.RequestTypeId AND RTM.IsActive = 1 AND RTM.DelMark = 0
+        LEFT JOIN USER_MASTER UM ON RM.CreatedBy = UM.UserId AND UM.IsActive = 1 AND UM.DelMark = 0
+        WHERE UR.UserId = ${userId} AND UR.IsActive = 1 AND UR.DelMark = 0
         ORDER BY RM.CreatedOn DESC
         OFFSET ${offset} ROWS FETCH NEXT ${pageSize} ROWS ONLY
       `;

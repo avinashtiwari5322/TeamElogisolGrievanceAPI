@@ -10,10 +10,11 @@ async function saveUserRequest(req, res) {
     requestTypeId,
     priorityId,
     userId,
+    companyId,
     attachments
   } = req.body;
 
-  if (!subject || !message || !requestTypeId || !priorityId || !userId) {
+  if (!subject || !message || !requestTypeId || !priorityId || !userId || !companyId) {
     return res.status(400).json({ success: false, message: 'Missing required fields.' });
   }
 
@@ -41,11 +42,12 @@ async function saveUserRequest(req, res) {
     const insertUserRequest = new sql.Request(transaction);
     insertUserRequest.input('userId', sql.Int, userId);
     insertUserRequest.input('requestId', sql.Int, requestId);
+    insertUserRequest.input('companyId', sql.Int, companyId);
     insertUserRequest.input('isActive', sql.Bit, 1);
     insertUserRequest.input('delMark', sql.Bit, 0);
     insertUserRequest.input('createdBy', sql.Int, userId);
     await insertUserRequest.query(
-      'INSERT INTO UserRequest (UserId, RequestId, IsActive, DelMark, CreatedBy, CreatedOn) VALUES (@userId, @requestId, @isActive, @delMark, @createdBy, GETDATE());'
+      'INSERT INTO UserRequest (UserId, RequestId, CompanyId, IsActive, DelMark, CreatedBy, CreatedOn) VALUES (@userId, @requestId, @companyId, @isActive, @delMark, @createdBy, GETDATE());'
     );
 
     // Handle attachments

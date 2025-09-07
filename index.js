@@ -7,6 +7,7 @@ const masterRoute = require('./routes/master');
 const requestRoute = require('./routes/request');
 const requestFetchRoute = require('./routes/requestFetch');
 const requestDetailRoute = require('./routes/requestDetail');
+const companyRoute = require('./routes/company');
 
 const app = express();
 const cors = require('cors');
@@ -19,6 +20,7 @@ app.use('/api/master', masterRoute);
 app.use('/api/request', requestRoute);
 app.use('/api/request-fetch', requestFetchRoute);
 app.use('/api/request-detail', requestDetailRoute);
+app.use('/api/company', companyRoute);
 
 connectToDatabase();
 

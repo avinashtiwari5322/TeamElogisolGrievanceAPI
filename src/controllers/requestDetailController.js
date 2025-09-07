@@ -11,14 +11,15 @@ async function getRequestDetail(req, res) {
       SELECT RM.RequestId, RM.Subject, RM.Message, RM.Remark, RM.PriorityId, PM.PriorityName,
              RM.StatusId, SM.StatusName, RM.IsActive, RM.DelMark, RM.CreatedBy, UM.UserName AS CreatedByUserName, RM.CreatedOn, RM.UpdatedBy, RM.UpdatedOn,
              RM.RequestTypeId, RTM.RequestType,
-             UM.CompanyId, CM.CompanyName
+             UR.CompanyId, CM.CompanyName
       FROM REQUEST_MASTER RM
-      LEFT JOIN PRIORITY_MASTER PM ON RM.PriorityId = PM.PriorityId
-      LEFT JOIN STATUS_MASTER SM ON RM.StatusId = SM.StatusId
-      LEFT JOIN REQUEST_TYPE_MASTER RTM ON RM.RequestTypeId = RTM.RequestTypeId
-      LEFT JOIN USER_MASTER UM ON RM.CreatedBy = UM.UserId
-      LEFT JOIN COMPANY_MASTER CM ON UM.CompanyId = CM.CompanyId
-      WHERE RM.RequestId = ${requestId}
+      LEFT JOIN PRIORITY_MASTER PM ON RM.PriorityId = PM.PriorityId AND PM.IsActive = 1 AND PM.DelMark = 0
+      LEFT JOIN STATUS_MASTER SM ON RM.StatusId = SM.StatusId AND SM.IsActive = 1 AND SM.DelMark = 0
+      LEFT JOIN REQUEST_TYPE_MASTER RTM ON RM.RequestTypeId = RTM.RequestTypeId AND RTM.IsActive = 1 AND RTM.DelMark = 0
+      LEFT JOIN USER_MASTER UM ON RM.CreatedBy = UM.UserId AND UM.IsActive = 1 AND UM.DelMark = 0
+      LEFT JOIN UserRequest UR ON UR.RequestId = RM.RequestId AND UR.IsActive = 1 AND UR.DelMark = 0
+      LEFT JOIN COMPANY_MASTER CM ON UR.CompanyId = CM.CompanyId AND CM.IsActive = 1 AND CM.DelMark = 0
+      WHERE RM.RequestId = ${requestId} AND RM.IsActive = 1 AND RM.DelMark = 0
     `;
     if (result.recordset.length === 0) {
       return res.status(404).json({ success: false, message: 'Request not found.' });
